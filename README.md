@@ -17,6 +17,7 @@ let scroll = ScrollThreeImageView(frame: frame, imageName: imageName, duration: 
 
 
 參數說明如下
+
 frame :     CGRect  整個scrollView的大小
 
 imageName : Array<String> 這是一個放置圖片檔案名稱的Array
