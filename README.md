@@ -18,7 +18,9 @@ let scroll = ScrollThreeImageView(frame: frame, imageName: imageName, duration: 
 
 參數說明如下
 frame :     CGRect  整個scrollView的大小
+
 imageName : Array<String> 這是一個放置圖片檔案名稱的Array
+
 duration :  Double 這是每次輪播的秒數
 
 特別注意的是，因為基本是用三個ImageView，所以imageName的Array.count不能少於3
