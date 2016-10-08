@@ -22,7 +22,7 @@ class ScrollThreeImageView: UIView,UIScrollViewDelegate{
     private var timer : NSTimer?
     
     init(frame:CGRect,imageName : [String],duration:Double){
-        super.init(frame:frame)
+    //    super.init(frame:frame)
         imageNameArray = imageName
         self.duration = duration
         contenView = UIView(frame: CGRect(x: 0, y: 0, width: self.frame.width, height: self.frame.height))
