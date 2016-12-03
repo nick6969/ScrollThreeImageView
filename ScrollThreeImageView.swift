@@ -8,141 +8,203 @@
 
 import UIKit
 
-class ScrollThreeImageView: UIView,UIScrollViewDelegate{
+class ScrollPage : UIViewController {
     
-    var imageNameArray = [""]
-    var duration : Double = 1
-    private var contenView : UIView = UIView()
-    private var scrollView : UIScrollView = UIScrollView()
-    private var pageControl : UIPageControl = UIPageControl()
-    private var imageView01 : UIImageView = UIImageView()
-    private var imageView02 : UIImageView = UIImageView()
-    private var imageView03 : UIImageView = UIImageView()
-    private var pageNumber : Int = 0
-    private var timer : NSTimer?
+    var imgNameArray :      [String] = [""]      // 圖片名稱 Array
+    var duration            : TimeInterval = 2.5 // 0 秒不動作
     
-    init(frame:CGRect,imageName : [String],duration:Double){
-    //medophin modify 2    super.init(frame:frame)
-        imageNameArray = imageName
-        self.duration = duration
-        contenView = UIView(frame: CGRect(x: 0, y: 0, width: self.frame.width, height: self.frame.height))
-        scrollView = UIScrollView(frame: contenView.frame)
-        scrollView.pagingEnabled = true
-        let scfw = scrollView.frame.width
-        let scfh = scrollView.frame.height
-        scrollView.contentSize = CGSize(width: scfw * 3, height: scfh)
-        imageView01 = UIImageView(frame: CGRect(x: scfw * CGFloat(0), y: 0, width: scfw, height: scfh))
-        imageView02 = UIImageView(frame: CGRect(x: scfw * CGFloat(1), y: 0, width: scfw, height: scfh))
-        imageView03 = UIImageView(frame: CGRect(x: scfw * CGFloat(2), y: 0, width: scfw, height: scfh))
-        imageView01.contentMode = .ScaleAspectFit
-        imageView02.contentMode = .ScaleAspectFit
-        imageView03.contentMode = .ScaleAspectFit
-        scrollView.contentOffset.x = scfw
-        pageControl = UIPageControl(frame: CGRect(x: 10, y: self.contenView.frame.height - 50 , width: 100, height: 30))
-        pageControl.currentPage = 1
-        pageControl.numberOfPages = imageNameArray.count
-        self.addSubview(contenView)
-        contenView.addSubview(scrollView)
-        scrollView.addSubview(imageView01)
-        scrollView.addSubview(imageView02)
-        scrollView.addSubview(imageView03)
-        contenView.addSubview(pageControl)
-        imageView01.image = UIImage(named: imageNameArray[imageNameArray.count-1])
-        imageView02.image = UIImage(named: imageNameArray[0])
-        imageView03.image = UIImage(named: imageNameArray[1])
-        scrollView.delegate = self
-        self.addTimer()
+    fileprivate var delegate    : UIScrollViewDelegate!
+    fileprivate var timer       : Timer?
+    fileprivate var scroll      = UIScrollView()
+    fileprivate var backView    = UIView()
+    fileprivate var imgView01   = UIImageView()
+    fileprivate var imgView02   = UIImageView()
+    fileprivate var imgView03   = UIImageView()
+    fileprivate var page        = 0
+    fileprivate var pageControl = UIPageControl()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setUI()
+        setLayout()
     }
     
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        duration != 0 ? ( self.addTimer() ) : ()
     }
     
-    //MARK:- UIScrollViewDelegate
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        scroll.contentOffset.x = scroll.frame.width
+    }
+    
+    private func setUI(){
+        self.automaticallyAdjustsScrollViewInsets = false
+        scroll.isPagingEnabled = true
+        self.delegate = self
+        scroll.delegate = self.delegate
+        scroll.showsHorizontalScrollIndicator = false
+        
+        pageControl.currentPage = page
+        pageControl.numberOfPages = imgNameArray.count
+        pageControl.currentPageIndicatorTintColor = .yellow
+        pageControl.pageIndicatorTintColor = .green
+        
+        self.view.addSubview(scroll)
+        scroll.addSubview(backView)
+        backView.addSubview(imgView01)
+        backView.addSubview(imgView02)
+        backView.addSubview(imgView03)
+        self.view.addSubview(pageControl)
+        
+        imgView01.contentMode = .scaleToFill
+        imgView02.contentMode = .scaleToFill
+        imgView03.contentMode = .scaleToFill
+        
+        imgView01.image = UIImage(named: imgNameArray[page != 0 ? page - 1 : imgNameArray.count-1])
+        imgView02.image = UIImage(named: imgNameArray[page])
+        imgView03.image = UIImage(named: imgNameArray[page != imgNameArray.count - 1 ? page + 1 : 0])
+        
+        
+    }
+    
+    private func setLayout(){
+        view.addConstraints([
+            scroll.mLay(.width     , .equal, view),
+            scroll.mLay(.centerX   , .equal, view),
+            scroll.mLay(.bottom    , .equal, view),
+            scroll.mLay(.top       , .equal, view),
+            ])
+        
+        view.addConstraints([
+            pageControl.mLay(.bottom  , .equal, view, constant: 10 ),
+            pageControl.mLay(.centerX , .equal, view),
+            
+            ])
+        
+        scroll.addConstraints([
+            backView.mLay(.width   , .equal, scroll, multiplier: 3, constant: 0),
+            backView.mLay(.height  , .equal, scroll),
+            backView.mLay(.left    , .equal, scroll),
+            backView.mLay(.top     , .equal, scroll),
+            backView.mLay(.right   , .equal, scroll),
+            backView.mLay(.bottom  , .equal, scroll),
+            
+            ])
+        
+        backView.addConstraints([
+            imgView01.mLay(.left   , .equal, backView),
+            imgView01.mLay(.top    , .equal, backView),
+            imgView01.mLay(.width  , .equal, backView, multiplier: 1.0 / 3.0 , constant: 0),
+            imgView01.mLay(.height , .equal, backView)
+            ])
+        
+        backView.addConstraints([
+            imgView02.mLay(.centerX, .equal, backView),
+            imgView02.mLay(.top    , .equal, backView),
+            imgView02.mLay(.width  , .equal, backView, multiplier: 1.0 / 3.0 , constant: 0),
+            imgView02.mLay(.height , .equal, backView)
+            ])
+        
+        backView.addConstraints([
+            imgView03.mLay(.right  , .equal, backView),
+            imgView03.mLay(.bottom , .equal, backView),
+            imgView03.mLay(.width  , .equal, backView, multiplier: 1.0 / 3.0 , constant: 0),
+            imgView03.mLay(.height , .equal, backView)
+            ])
+    }
+}
+
+extension ScrollPage : UIScrollViewDelegate {
+    // UIScrollViewDelegate
+    func scrollViewDidScroll(_ scrollView: UIScrollView){
+        func change(){
+            pageControl.currentPage = page
+            imgView01.image = UIImage(named: imgNameArray[page != 0 ? page - 1 : imgNameArray.count-1] )
+            imgView02.image = UIImage(named: imgNameArray[page])
+            imgView03.image = UIImage(named: imgNameArray[page != imgNameArray.count-1 ? page + 1 : 0])
+            scrollView.contentOffset.x = scrollView.frame.width
+        }
+        
+        if scrollView.contentOffset.x == 0 { // 向左滑
+            page != 0 ? ( page -= 1 ): ( page = imgNameArray.count - 1 )
+            change()
+        } else if scrollView.contentOffset.x == scrollView.frame.width * CGFloat(2) { // 向右滑
+            page != imgNameArray.count - 1 ? ( page += 1 ) : ( page = 0 )
+            change()
+        }
+        
+    }
+    
     // 開始滑動scrollView
-    func scrollViewWillBeginDragging(scrollView: UIScrollView) {
-        self.removeTimer()
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        duration != 0 ? ( self.removeTimer() ) : ()
     }
     
     // scrollView減速停止後
-    func scrollViewDidEndDecelerating(scrollView: UIScrollView) {
-        self.addTimer()
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        duration != 0 ? ( self.addTimer() ) : ()
     }
-    
-    // scrollView滑動中
-    func scrollViewDidScroll(scrollView: UIScrollView) {
-        let width = self.scrollView.frame.width
-        let offsetX = scrollView.contentOffset.x
-        if offsetX == 0 {
-            if pageNumber == 0{
-                pageNumber = imageNameArray.count-1
-                imageView01.image = UIImage(named: imageNameArray[pageNumber-1])
-                imageView02.image = UIImage(named: imageNameArray[pageNumber])
-                imageView03.image = UIImage(named: imageNameArray[0])
-                scrollView.contentOffset = CGPointMake(width, 0)
-            }else if pageNumber == imageNameArray.count - 1{
-                pageNumber = pageNumber - 1
-                imageView01.image = UIImage(named: imageNameArray[pageNumber-1])
-                imageView02.image = UIImage(named: imageNameArray[pageNumber])
-                imageView03.image = UIImage(named: imageNameArray[0])
-                scrollView.contentOffset = CGPointMake(width, 0)
-            }else if pageNumber == 1{
-                pageNumber = pageNumber - 1
-                imageView01.image = UIImage(named: imageNameArray[imageNameArray.count-1])
-                imageView02.image = UIImage(named: imageNameArray[pageNumber])
-                imageView03.image = UIImage(named: imageNameArray[pageNumber+1])
-                scrollView.contentOffset = CGPointMake(width, 0)
-            }else{
-                pageNumber = pageNumber - 1
-                imageView01.image = UIImage(named: imageNameArray[pageNumber-1])
-                imageView02.image = UIImage(named: imageNameArray[pageNumber])
-                imageView03.image = UIImage(named: imageNameArray[pageNumber+1])
-                scrollView.contentOffset = CGPointMake(width, 0)
-            }
-        }
-        if offsetX == width * CGFloat(2) {
-            if pageNumber == imageNameArray.count - 1 {
-                pageNumber = 0
-                imageView01.image = UIImage(named: imageNameArray[imageNameArray.count - 1])
-                imageView02.image = UIImage(named: imageNameArray[pageNumber])
-                imageView03.image = UIImage(named: imageNameArray[pageNumber + 1])
-                scrollView.contentOffset = CGPointMake(width, 0)
-            }else if pageNumber == imageNameArray.count - 2 {
-                pageNumber = pageNumber + 1
-                imageView01.image = UIImage(named: imageNameArray[pageNumber - 1])
-                imageView02.image = UIImage(named: imageNameArray[pageNumber])
-                imageView03.image = UIImage(named: imageNameArray[0])
-                scrollView.contentOffset = CGPointMake(width, 0)
-            }else {
-                pageNumber = pageNumber + 1
-                imageView01.image = UIImage(named: imageNameArray[pageNumber-1])
-                imageView02.image = UIImage(named: imageNameArray[pageNumber])
-                imageView03.image = UIImage(named: imageNameArray[pageNumber+1])
-                scrollView.contentOffset = CGPointMake(width, 0)
-            }
-        }
-        pageControl.currentPage = pageNumber
-    }
-    
-    // MARK:- 自動播放
+}
+
+// MARK:- Timer 相關
+extension ScrollPage {
+    // 加上 Timer
     func addTimer(){
         self.removeTimer()
-        self.timer = NSTimer(timeInterval: duration, target: self, selector: Selector("updateTimer"), userInfo: nil, repeats: true)
-        NSRunLoop.mainRunLoop().addTimer(self.timer!, forMode: NSRunLoopCommonModes)
+        self.timer = Timer(timeInterval: duration, target: self, selector: #selector(ScrollPage.updateTimer), userInfo: nil, repeats: true)
+        RunLoop.main.add(self.timer!, forMode: RunLoopMode.commonModes)
     }
     
+    // 移除 Timer
     func removeTimer(){
         self.timer?.invalidate()
         self.timer = nil
     }
     
+    // Timer 每次的動作
     func updateTimer(){
-        let width = self.scrollView.frame.width
-        var frame = scrollView.frame
-        frame.origin.x = frame.size.width + width
+        var frame = scroll.frame
+        frame.origin.x = scroll.frame.size.width * 2
         frame.origin.y = 0
-        scrollView.scrollRectToVisible(frame , animated: true)
+        scroll.scrollRectToVisible(frame , animated: true)
     }
+    
 }
 
+
+// 自己建立的簡單的使用 AutoLayout
+extension UIView{
+    
+    // 便利使用的 NSLayoutConstraint
+    func mLay(_ attribute:NSLayoutAttribute,_ relatedBy:NSLayoutRelation,_ toItem:Any?,_ attribute1:NSLayoutAttribute , multiplier: CGFloat , constant: CGFloat)->NSLayoutConstraint{
+        self.translatesAutoresizingMaskIntoConstraints = false
+        return NSLayoutConstraint(item: self, attribute: attribute, relatedBy: relatedBy, toItem: toItem, attribute: attribute1, multiplier: multiplier, constant: constant)
+    }
+    
+    // 便利使用的 NSLayoutConstraint
+    func mLay(_ attribute:NSLayoutAttribute,_ relatedBy:NSLayoutRelation,_ toItem:Any?)->NSLayoutConstraint{
+        return mLay(attribute, relatedBy, toItem, attribute, multiplier:1, constant:0)
+    }
+    
+    // 便利使用的 NSLayoutConstraint
+    func mLay(_ attribute:NSLayoutAttribute,_ constant: CGFloat)->NSLayoutConstraint{
+        return mLay(attribute, .equal, nil, attribute,multiplier: 1, constant:constant)
+    }
+    
+    // 便利使用的 NSLayoutConstraint
+    func mLay(_ attribute:NSLayoutAttribute,_ relatedBy:NSLayoutRelation,_ toItem:Any?, multiplier: CGFloat, constant: CGFloat)->NSLayoutConstraint{
+        return mLay(attribute, relatedBy , toItem, attribute, multiplier:multiplier, constant:constant)
+    }
+    // 便利使用的 NSLayoutConstraint
+    func mLay(_ attribute:NSLayoutAttribute,_ relatedBy:NSLayoutRelation,_ toItem:Any?,  constant: CGFloat)->NSLayoutConstraint{
+        return mLay(attribute, relatedBy , toItem, attribute, multiplier:1, constant:constant)
+    }
+    // 便利使用的 NSLayoutConstraint
+    func mLay(_ attribute:NSLayoutAttribute,_ relatedBy:NSLayoutRelation,_ toItem:Any?,_ attribute1:NSLayoutAttribute ,constant: CGFloat)->NSLayoutConstraint{
+        return mLay(attribute, relatedBy , toItem, attribute1, multiplier:1, constant:constant)
+    }
+    
+}
 
